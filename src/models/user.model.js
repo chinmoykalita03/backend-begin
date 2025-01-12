@@ -61,6 +61,9 @@ userSchema.methods.isPasswordCorrect = async function (password) {
   if (!password) {
     throw new Error("Password argument is required");
   }
+
+ // console.log('provided password:',password);
+ // console.log('Stored password hash: ',this.password)
   return await bcrypt.compare(password, this.password);
 };
 

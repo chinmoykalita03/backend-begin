@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshTokens = async(userId)=>{
   try{
@@ -111,7 +112,7 @@ const loginUser = asyncHandler( async(req,res) =>{
 
   const user = await User.findOne({
     $or:[{username},{email}]
-  })
+  }).select('+password');
 
   if(!user){
     throw new ApiError(404,"User does not exsist")
@@ -132,7 +133,6 @@ const loginUser = asyncHandler( async(req,res) =>{
     secure: true
   };
 
-  //67 132
 
   return res
   .status(200)
@@ -154,8 +154,8 @@ const logoutUser = asyncHandler(async(req,res)=>{
   await User.findByIdAndUpdate(
     req.user._id,
     {
-      $set: {
-        refreshToken: undefined
+      $unset: {
+        refreshToken: 1
       }
     },
     {
@@ -328,7 +328,7 @@ const updateUserCoverImage = asyncHandler(async(req,res)=>{
 })
 
 const getUserChannelProfile = asyncHandler(async(req,res)=>{
-  const {username} = req.paarams
+  const {username} = req.params
 
   if(!username?.trim()){
     throw new ApiError(400,"username is missing")
@@ -403,7 +403,7 @@ const getWatchHistory = asyncHandler(async(req,res)=>{
   const user = await User.aggregate([
     {
       $match:{
-        _id: new mongoose.Types.ObjectId(req.usr._id)
+        _id: new mongoose.Types.ObjectId(req.user._id)
       }
     },
     {
@@ -431,7 +431,7 @@ const getWatchHistory = asyncHandler(async(req,res)=>{
             }
           },
           {
-            $ddFields:{
+            $addFields:{
               owner:{
                 $first:"$owner"
               }
